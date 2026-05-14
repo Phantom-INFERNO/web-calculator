@@ -181,14 +181,14 @@ class Calculator {
             this.calculateResult();
             return;
         } else if (key === 'pi') {
-            if (this.currentValue !== '0') {
+            if (this.currentValue !== '0' && this.currentValue !== '') {
                 this.expression += this.currentValue + '*π';
             } else {
                 this.expression += 'π';
             }
             this.currentValue = '';
         } else if (key === 'e') {
-            if (this.currentValue !== '0') {
+            if (this.currentValue !== '0' && this.currentValue !== '') {
                 this.expression += this.currentValue + '*e';
             } else {
                 this.expression += 'e';
@@ -203,7 +203,7 @@ class Calculator {
             this.expression += this.currentValue + key;
             this.currentValue = '';
         } else if (key === '(') {
-            if (this.currentValue !== '0') {
+            if (this.currentValue !== '0' && this.currentValue !== '') {
                 this.expression += this.currentValue + '*(';
             } else {
                 this.expression += '(';
