@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科学计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+                    科学计算器
+                </h1>
+                <p class="text-gray-400 text-sm mt-2">支持高精度计算（15+位小数）</p>
+            </div>
+
+            <div class="bg-gray-800/50 backdrop-blur-lg rounded-3xl p-4 shadow-2xl border border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex gap-2">
+                        <button id="degBtn" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-cyan-600 hover:bg-cyan-500 transition-colors">
+                            DEG
+                        </button>
+                        <button id="radBtn" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 transition-colors">
+                            RAD
+                        </button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="historyBtn" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 transition-colors">
+                            历史记录
+                        </button>
+                        <button id="darkModeBtn" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 transition-colors">
+                            深色模式
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/80 rounded-xl p-4 mb-4">
+                    <div id="display" class="text-right text-3xl font-mono min-h-[60px] break-all">
+                        0
+                    </div>
+                    <div id="expression" class="text-right text-gray-400 text-sm mt-2 font-mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-5 gap-2">
+                    <button class="calc-btn secondary" data-key="f2">F2</button>
+                    <button class="calc-btn func" data-key="sin">sin</button>
+                    <button class="calc-btn func" data-key="cos">cos</button>
+                    <button class="calc-btn func" data-key="tan">tan</button>
+                    <button class="calc-btn operator" data-key="%">%</button>
+                    
+                    <button class="calc-btn func" data-key="pow">x^y</button>
+                    <button class="calc-btn func" data-key="sqrt">√</button>
+                    <button class="calc-btn constant" data-key="pi">π</button>
+                    <button class="calc-btn constant" data-key="e">e</button>
+                    <button class="calc-btn func" data-key="log">log</button>
+                    
+                    <button class="calc-btn number" data-key="7">7</button>
+                    <button class="calc-btn number" data-key="8">8</button>
+                    <button class="calc-btn number" data-key="9">9</button>
+                    <button class="calc-btn operator" data-key="backspace">←</button>
+                    <button class="calc-btn clear" data-key="ac">AC</button>
+                    
+                    <button class="calc-btn number" data-key="4">4</button>
+                    <button class="calc-btn number" data-key="5">5</button>
+                    <button class="calc-btn number" data-key="6">6</button>
+                    <button class="calc-btn operator" data-key="*">×</button>
+                    <button class="calc-btn operator" data-key="/">÷</button>
+                    
+                    <button class="calc-btn number" data-key="1">1</button>
+                    <button class="calc-btn number" data-key="2">2</button>
+                    <button class="calc-btn number" data-key="3">3</button>
+                    <button class="calc-btn operator" data-key="+">+</button>
+                    <button class="calc-btn operator" data-key="-">-</button>
+                    
+                    <button class="calc-btn number" data-key="0">0</button>
+                    <button class="calc-btn number" data-key=".">.</button>
+                    <button class="calc-btn operator" data-key="(">(</button>
+                    <button class="calc-btn operator" data-key=")">)</button>
+                    <button class="calc-btn equal" data-key="=">=</button>
+                </div>
+
+                <div id="f2Panel" class="mt-4 p-3 bg-gray-900/50 rounded-xl grid grid-cols-5 gap-2 hidden">
+                    <button class="calc-btn secondary" data-key="f2">F2</button>
+                    <button class="calc-btn func" data-key="asin">sin⁻¹</button>
+                    <button class="calc-btn func" data-key="acos">cos⁻¹</button>
+                    <button class="calc-btn func" data-key="atan">tan⁻¹</button>
+                    <button class="calc-btn func" data-key="csc">csc</button>
+                    
+                    <button class="calc-btn func" data-key="sec">sec</button>
+                    <button class="calc-btn func" data-key="cot">cot</button>
+                    <button class="calc-btn func" data-key="cbrt">³√</button>
+                    <button class="calc-btn func" data-key="ln">ln</button>
+                    <button class="calc-btn func" data-key="fact">!</button>
+                </div>
+            </div>
+
+            <div id="historyPanel" class="mt-4 bg-gray-800/50 backdrop-blur-lg rounded-2xl p-4 hidden border border-gray-700">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-semibold">计算历史</h3>
+                    <button id="clearHistoryBtn" class="text-sm text-gray-400 hover:text-white">清除</button>
+                </div>
+                <div id="historyList" class="space-y-2 max-h-48 overflow-y-auto">
+                    <p class="text-gray-500 text-center">暂无历史记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/calculator.js"></script>
+</body>
+</html>

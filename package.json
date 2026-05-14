@@ -1,0 +1,16 @@
+{
+  "name": "web-calculator",
+  "version": "1.0.0",
+  "description": "A web-based scientific calculator deployable to GitHub Pages",
+  "main": "index.html",
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "keywords": ["calculator", "scientific", "web"],
+  "author": "",
+  "license": "MIT"
+}
