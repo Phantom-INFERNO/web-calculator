@@ -1,0 +1,74 @@
+.calc-btn {
+    @apply py-3 rounded-xl font-semibold text-lg transition-all duration-150 transform active:scale-95;
+}
+
+.calc-btn.number {
+    @apply bg-gray-700 hover:bg-gray-600 text-white;
+}
+
+.calc-btn.operator {
+    @apply bg-amber-600 hover:bg-amber-500 text-white;
+}
+
+.calc-btn.func {
+    @apply bg-purple-600 hover:bg-purple-500 text-white;
+}
+
+.calc-btn.constant {
+    @apply bg-blue-600 hover:bg-blue-500 text-white;
+}
+
+.calc-btn.secondary {
+    @apply bg-gray-600 hover:bg-gray-500 text-white;
+}
+
+.calc-btn.clear {
+    @apply bg-red-600 hover:bg-red-500 text-white;
+}
+
+.calc-btn.equal {
+    @apply bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white;
+}
+
+#display {
+    font-size: 2.5rem;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
+}
+
+#expression {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.history-item {
+    @apply flex justify-between items-center p-2 bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-700;
+}
+
+.history-item:hover {
+    @apply bg-gray-700;
+}
+
+.history-expression {
+    @apply text-gray-300 text-sm font-mono;
+}
+
+.history-result {
+    @apply text-cyan-400 text-sm font-mono font-semibold;
+}
