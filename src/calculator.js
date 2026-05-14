@@ -266,7 +266,6 @@ class Calculator {
 
     tokenize(expr) {
         const tokens = [];
-        let i = 0;
         const regex = /(\d+\.?\d*|[a-zA-Z]+|[+\-*/^()!%])/g;
         let match;
         
@@ -285,12 +284,29 @@ class Calculator {
         const isFunction = (token) => ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'csc', 'sec', 'cot', 'sqrt', 'cbrt', 'log', 'ln'].includes(token);
         let prevToken = null;
         
-        for (const token of tokens) {
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            const nextToken = tokens[i + 1];
+            
             if (/^\d+\.?\d*$/.test(token)) {
                 output.push(parseFloat(token));
+                // 如果下一个是函数或左括号，添加隐式乘法
+                if (nextToken && (isFunction(nextToken) || nextToken === '(')) {
+                    while (operators.length && operators[operators.length - 1] !== '(' && precedence[operators[operators.length - 1]] >= precedence['*']) {
+                        output.push(operators.pop());
+                    }
+                    operators.push('*');
+                }
             } else if (isFunction(token)) {
                 operators.push(token);
             } else if (token === '(') {
+                // 如果前一个是数字，添加隐式乘法
+                if (prevToken && /^\d+\.?\d*$/.test(prevToken)) {
+                    while (operators.length && operators[operators.length - 1] !== '(' && precedence[operators[operators.length - 1]] >= precedence['*']) {
+                        output.push(operators.pop());
+                    }
+                    operators.push('*');
+                }
                 operators.push(token);
             } else if (token === ')') {
                 while (operators.length && operators[operators.length - 1] !== '(') {
@@ -299,6 +315,13 @@ class Calculator {
                 operators.pop();
                 if (operators.length && isFunction(operators[operators.length - 1])) {
                     output.push(operators.pop());
+                }
+                // 如果下一个是数字或函数，添加隐式乘法
+                if (nextToken && (/^\d+\.?\d*$/.test(nextToken) || isFunction(nextToken) || nextToken === '(')) {
+                    while (operators.length && operators[operators.length - 1] !== '(' && precedence[operators[operators.length - 1]] >= precedence['*']) {
+                        output.push(operators.pop());
+                    }
+                    operators.push('*');
                 }
             } else if (token === '!' || token === '%') {
                 output.push(token);
@@ -327,87 +350,116 @@ class Calculator {
     evaluatePostfix(postfix) {
         const stack = [];
         
-        for (const token of postfix) {
-            if (typeof token === 'number') {
-                stack.push(token);
-            } else if (token === '_') {
-                const a = stack.pop();
-                stack.push(-a);
-            } else if (token === '+') {
-                const b = stack.pop();
-                const a = stack.pop();
-                stack.push(a + b);
-            } else if (token === '-') {
-                const b = stack.pop();
-                const a = stack.pop();
-                stack.push(a - b);
-            } else if (token === '*') {
-                const b = stack.pop();
-                const a = stack.pop();
-                stack.push(a * b);
-            } else if (token === '/') {
-                const b = stack.pop();
-                const a = stack.pop();
-                stack.push(a / b);
-            } else if (token === '^') {
-                const b = stack.pop();
-                const a = stack.pop();
-                stack.push(Math.pow(a, b));
-            } else if (token === '!') {
-                const a = stack.pop();
-                stack.push(this.factorial(a));
-            } else if (token === '%') {
-                const a = stack.pop();
-                stack.push(a / 100);
-            } else if (token === 'sin') {
-                const a = stack.pop();
-                stack.push(this.mode === 'deg' ? Math.sin(this.degToRad(a)) : Math.sin(a));
-            } else if (token === 'cos') {
-                const a = stack.pop();
-                stack.push(this.mode === 'deg' ? Math.cos(this.degToRad(a)) : Math.cos(a));
-            } else if (token === 'tan') {
-                const a = stack.pop();
-                stack.push(this.mode === 'deg' ? Math.tan(this.degToRad(a)) : Math.tan(a));
-            } else if (token === 'asin') {
-                const a = stack.pop();
-                const result = Math.asin(a);
-                stack.push(this.mode === 'deg' ? this.radToDeg(result) : result);
-            } else if (token === 'acos') {
-                const a = stack.pop();
-                const result = Math.acos(a);
-                stack.push(this.mode === 'deg' ? this.radToDeg(result) : result);
-            } else if (token === 'atan') {
-                const a = stack.pop();
-                const result = Math.atan(a);
-                stack.push(this.mode === 'deg' ? this.radToDeg(result) : result);
-            } else if (token === 'csc') {
-                const a = stack.pop();
-                const sinVal = this.mode === 'deg' ? Math.sin(this.degToRad(a)) : Math.sin(a);
-                stack.push(1 / sinVal);
-            } else if (token === 'sec') {
-                const a = stack.pop();
-                const cosVal = this.mode === 'deg' ? Math.cos(this.degToRad(a)) : Math.cos(a);
-                stack.push(1 / cosVal);
-            } else if (token === 'cot') {
-                const a = stack.pop();
-                const tanVal = this.mode === 'deg' ? Math.tan(this.degToRad(a)) : Math.tan(a);
-                stack.push(1 / tanVal);
-            } else if (token === 'sqrt') {
-                const a = stack.pop();
-                stack.push(Math.sqrt(a));
-            } else if (token === 'cbrt') {
-                const a = stack.pop();
-                stack.push(Math.cbrt(a));
-            } else if (token === 'log') {
-                const a = stack.pop();
-                stack.push(Math.log10(a));
-            } else if (token === 'ln') {
-                const a = stack.pop();
-                stack.push(Math.log(a));
+        try {
+            for (const token of postfix) {
+                if (typeof token === 'number') {
+                    stack.push(token);
+                } else if (token === '_') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(-a);
+                } else if (token === '+') {
+                    if (stack.length < 2) throw new Error('Invalid expression');
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(a + b);
+                } else if (token === '-') {
+                    if (stack.length < 2) throw new Error('Invalid expression');
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(a - b);
+                } else if (token === '*') {
+                    if (stack.length < 2) throw new Error('Invalid expression');
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(a * b);
+                } else if (token === '/') {
+                    if (stack.length < 2) throw new Error('Invalid expression');
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(a / b);
+                } else if (token === '^') {
+                    if (stack.length < 2) throw new Error('Invalid expression');
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(Math.pow(a, b));
+                } else if (token === '!') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(this.factorial(a));
+                } else if (token === '%') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(a / 100);
+                } else if (token === 'sin') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(this.mode === 'deg' ? Math.sin(this.degToRad(a)) : Math.sin(a));
+                } else if (token === 'cos') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(this.mode === 'deg' ? Math.cos(this.degToRad(a)) : Math.cos(a));
+                } else if (token === 'tan') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(this.mode === 'deg' ? Math.tan(this.degToRad(a)) : Math.tan(a));
+                } else if (token === 'asin') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    const result = Math.asin(a);
+                    stack.push(this.mode === 'deg' ? this.radToDeg(result) : result);
+                } else if (token === 'acos') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    const result = Math.acos(a);
+                    stack.push(this.mode === 'deg' ? this.radToDeg(result) : result);
+                } else if (token === 'atan') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    const result = Math.atan(a);
+                    stack.push(this.mode === 'deg' ? this.radToDeg(result) : result);
+                } else if (token === 'csc') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    const sinVal = this.mode === 'deg' ? Math.sin(this.degToRad(a)) : Math.sin(a);
+                    stack.push(1 / sinVal);
+                } else if (token === 'sec') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    const cosVal = this.mode === 'deg' ? Math.cos(this.degToRad(a)) : Math.cos(a);
+                    stack.push(1 / cosVal);
+                } else if (token === 'cot') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    const tanVal = this.mode === 'deg' ? Math.tan(this.degToRad(a)) : Math.tan(a);
+                    stack.push(1 / tanVal);
+                } else if (token === 'sqrt') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(Math.sqrt(a));
+                } else if (token === 'cbrt') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(Math.cbrt(a));
+                } else if (token === 'log') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(Math.log10(a));
+                } else if (token === 'ln') {
+                    if (stack.length < 1) throw new Error('Invalid expression');
+                    const a = stack.pop();
+                    stack.push(Math.log(a));
+                }
             }
+            
+            if (stack.length !== 1) {
+                throw new Error('Invalid expression');
+            }
+            
+            return stack[0];
+        } catch (error) {
+            return NaN;
         }
-        
-        return stack[0];
     }
 
     degToRad(deg) {

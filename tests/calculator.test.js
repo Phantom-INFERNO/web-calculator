@@ -198,6 +198,12 @@ describe('Calculator', () => {
             const result = calculator.calculate('e^10');
             expect(result).toBeCloseTo(Math.pow(Math.E, 10), 10);
         });
+
+        test('π^π should calculate correctly', () => {
+            const result = calculator.calculate('π^π');
+            expect(result).toBeCloseTo(Math.pow(Math.PI, Math.PI), 10);
+            expect(result).not.toBeNaN();
+        });
     });
 
     describe('Reciprocal Trigonometric Functions', () => {
