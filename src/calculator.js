@@ -2,8 +2,7 @@ class Calculator {
     constructor() {
         this.display = document.getElementById('display');
         this.expressionDisplay = document.getElementById('expression');
-        this.currentValue = '0';
-        this.expression = '';
+        this.inputBuffer = '';
         this.isResult = false;
         this.mode = 'deg';
         this.f2Mode = false;
@@ -51,11 +50,12 @@ class Calculator {
         document.querySelectorAll('.history-item').forEach(item => {
             item.addEventListener('click', () => {
                 const expr = decodeURIComponent(item.dataset.expression);
-                this.expression = expr;
+                this.inputBuffer = expr;
                 this.expressionDisplay.textContent = expr;
-                this.currentValue = this.calculate(expr);
-                this.display.textContent = this.formatNumber(this.currentValue);
+                const result = this.calculate(expr);
+                this.display.textContent = this.formatNumber(result);
                 this.isResult = true;
+                this.inputBuffer = result.toString();
             });
         });
     }
@@ -133,25 +133,75 @@ class Calculator {
     }
 
     clear() {
-        this.currentValue = '0';
-        this.expression = '';
+        this.inputBuffer = '';
         this.isResult = false;
-        this.display.textContent = '0';
-        this.expressionDisplay.textContent = '';
+        this.updateDisplays();
     }
 
     backspace() {
         if (this.isResult) return;
-        this.currentValue = this.currentValue.slice(0, -1) || '0';
-        this.display.textContent = this.currentValue;
+
+        const funcPatterns = [
+            { pattern: 'sin(', length: 4 },
+            { pattern: 'cos(', length: 4 },
+            { pattern: 'tan(', length: 4 },
+            { pattern: 'asin(', length: 5 },
+            { pattern: 'acos(', length: 5 },
+            { pattern: 'atan(', length: 5 },
+            { pattern: 'csc(', length: 4 },
+            { pattern: 'sec(', length: 4 },
+            { pattern: 'cot(', length: 4 },
+            { pattern: 'sqrt(', length: 5 },
+            { pattern: 'cbrt(', length: 5 },
+            { pattern: 'log(', length: 4 },
+            { pattern: 'ln(', length: 3 }
+        ];
+
+        const constPatterns = [
+            { pattern: 'π', length: 1 },
+            { pattern: 'e', length: 1 }
+        ];
+
+        let deleted = false;
+
+        for (const func of funcPatterns) {
+            if (this.inputBuffer.endsWith(func.pattern)) {
+                this.inputBuffer = this.inputBuffer.slice(0, -func.length);
+                deleted = true;
+                break;
+            }
+        }
+
+        if (!deleted) {
+            for (const con of constPatterns) {
+                if (this.inputBuffer.endsWith(con.pattern)) {
+                    this.inputBuffer = this.inputBuffer.slice(0, -con.length);
+                    deleted = true;
+                    break;
+                }
+            }
+        }
+
+        if (!deleted) {
+            this.inputBuffer = this.inputBuffer.slice(0, -1);
+        }
+
+        this.updateDisplays();
+    }
+
+    updateDisplays() {
+        this.expressionDisplay.textContent = this.inputBuffer;
+        if (this.inputBuffer === '') {
+            this.display.textContent = '0';
+        } else {
+            this.display.textContent = this.inputBuffer;
+        }
     }
 
     appendToDisplay(key) {
         if (this.isResult) {
-            this.currentValue = '0';
-            this.expression = '';
+            this.inputBuffer = '';
             this.isResult = false;
-            this.expressionDisplay.textContent = '';
         }
 
         const funcMap = {
@@ -167,69 +217,63 @@ class Calculator {
         const displayKey = funcMap[key] || key;
 
         if (key === 'sqrt') {
-            this.expression += 'sqrt(';
-            this.currentValue = '';
+            this.inputBuffer += 'sqrt(';
         } else if (key === 'cbrt') {
-            this.expression += 'cbrt(';
-            this.currentValue = '';
+            this.inputBuffer += 'cbrt(';
         } else if (key === 'pow') {
-            this.expression += this.currentValue + '^';
-            this.currentValue = '';
+            this.inputBuffer += '^';
         } else if (key === 'fact') {
-            this.currentValue += '!';
-            this.expression += this.currentValue;
+            this.inputBuffer += '!';
             this.calculateResult();
             return;
         } else if (key === 'pi') {
-            if (this.currentValue !== '0' && this.currentValue !== '') {
-                this.expression += this.currentValue + '*π';
+            if (this.inputBuffer !== '' && /[\dπe)!]$/.test(this.inputBuffer)) {
+                this.inputBuffer += '*π';
             } else {
-                this.expression += 'π';
+                this.inputBuffer += 'π';
             }
-            this.currentValue = '';
         } else if (key === 'e') {
-            if (this.currentValue !== '0' && this.currentValue !== '') {
-                this.expression += this.currentValue + '*e';
+            if (this.inputBuffer !== '' && /[\dπe)!]$/.test(this.inputBuffer)) {
+                this.inputBuffer += '*e';
             } else {
-                this.expression += 'e';
+                this.inputBuffer += 'e';
             }
-            this.currentValue = '';
         } else if (['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'csc', 'sec', 'cot', 'log', 'ln'].includes(key)) {
-            this.expression += displayKey;
-            this.currentValue = '';
+            this.inputBuffer += displayKey;
         } else if (key === '%') {
-            this.currentValue = (parseFloat(this.currentValue) / 100).toString();
+            this.inputBuffer += '%';
         } else if (['+', '-', '*', '/', '^'].includes(key)) {
-            this.expression += this.currentValue + key;
-            this.currentValue = '';
+            this.inputBuffer += key;
         } else if (key === '(') {
-            if (this.currentValue !== '0' && this.currentValue !== '') {
-                this.expression += this.currentValue + '*(';
+            if (this.inputBuffer !== '' && /[\dπe)!]$/.test(this.inputBuffer)) {
+                this.inputBuffer += '*(';
             } else {
-                this.expression += '(';
+                this.inputBuffer += '(';
             }
-            this.currentValue = '';
         } else if (key === ')') {
-            this.expression += this.currentValue + ')';
-            this.currentValue = '';
-        } else {
-            if (this.currentValue === '0' && key !== '.') {
-                this.currentValue = key;
-            } else if (key === '.' && this.currentValue.includes('.')) {
+            this.inputBuffer += ')';
+        } else if (key === '.') {
+            if (!this.canAddDecimal()) {
                 return;
-            } else {
-                this.currentValue += key;
             }
+            this.inputBuffer += key;
+        } else {
+            this.inputBuffer += key;
         }
 
-        this.display.textContent = this.currentValue || '0';
-        this.expressionDisplay.textContent = this.expression;
+        this.updateDisplays();
+    }
+
+    canAddDecimal() {
+        const lastNumberMatch = this.inputBuffer.match(/[\d.]+$/);
+        if (!lastNumberMatch) return true;
+        return !lastNumberMatch[0].includes('.');
     }
 
     calculateResult() {
-        if (!this.expression && !this.currentValue) return;
+        if (!this.inputBuffer) return;
 
-        let fullExpression = this.expression + this.currentValue;
+        let fullExpression = this.inputBuffer;
         
         try {
             const result = this.calculate(fullExpression);
@@ -242,13 +286,12 @@ class Calculator {
                 this.addToHistory(fullExpression, result);
             }
             
-            this.expression = '';
-            this.currentValue = result.toString();
+            this.inputBuffer = result.toString();
             this.isResult = true;
+            this.expressionDisplay.textContent = fullExpression;
         } catch (error) {
             this.display.textContent = '错误';
-            this.expression = '';
-            this.currentValue = '0';
+            this.inputBuffer = '';
             this.isResult = true;
         }
     }
